@@ -1,0 +1,5 @@
+node_modules/
+uploads/albums/*
+!uploads/albums/.gitkeep
+.env
+.DS_Store 
