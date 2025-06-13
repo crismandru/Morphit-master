@@ -53,7 +53,6 @@ const somnSchema = new mongoose.Schema({
   }
 });
 
-// Validare pentru a preveni sesiuni multiple în aceeași zi
 somnSchema.pre('save', async function(next) {
   const data = new Date(this.data);
   data.setHours(0, 0, 0, 0);

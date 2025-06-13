@@ -63,7 +63,6 @@ const antrenamentSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexuri pentru căutări rapide
 antrenamentSchema.index({ utilizator: 1, data: -1 });
 antrenamentSchema.index({ tip: 1 });
 

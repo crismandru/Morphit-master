@@ -55,7 +55,6 @@ const exercitiuSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexuri pentru căutări rapide
 exercitiuSchema.index({ grupaMusculara: 1 });
 exercitiuSchema.index({ nume: 1 });
 

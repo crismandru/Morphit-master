@@ -91,7 +91,7 @@ const antrenamenteRoutes = require('./routes/antrenamente');
 app.use('/api/antrenamente', antrenamenteRoutes);
 
 const PORT = process.env.PORT || 5000;
-const HOST = '172.20.10.3';
+const HOST = '172.20.10.2';
 app.listen(PORT, () => {
   console.log(`Serverul rulează pe portul ${PORT}`);
   console.log(`URL pentru acces: http://${HOST}:${PORT}`);
