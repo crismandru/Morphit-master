@@ -36,11 +36,11 @@ const JurnalAdaugaNotita = ({ route }) => {
       };
 
       if (id) {
-        await axios.put(`http://172.20.10.3:5000/jurnal/${id}`, notitaData, {
+        await axios.put(`http://172.20.10.2:5000/jurnal/${id}`, notitaData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await axios.post('http://172.20.10.3:5000/jurnal', notitaData, {
+        await axios.post('http://172.20.10.2:5000/jurnal', notitaData, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }

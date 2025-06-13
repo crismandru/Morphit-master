@@ -6,7 +6,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Circle } from 'react-native-progress';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://172.20.10.3:5000';
+const API_BASE_URL = 'http://172.20.10.2:5000';
 
 const Alimentatie = () => {
   const navigare = useNavigation();

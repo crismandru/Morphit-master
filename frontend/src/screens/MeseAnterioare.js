@@ -4,9 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
-import { LinearGradient } from 'expo-linear-gradient';
 
-const API_BASE_URL = 'http://172.20.10.3:5000';
+const API_BASE_URL = 'http://172.20.10.2:5000';
 
 const MeseAnterioare = () => {
   const navigare = useNavigation();
@@ -35,7 +34,7 @@ const MeseAnterioare = () => {
         const token = await AsyncStorage.getItem('token');
         if (!token) return;
 
-        const response = await axios.get('http://172.20.10.3:5000/alimentatie/istoric', {
+        const response = await axios.get('http://172.20.10.2:5000/alimentatie/istoric', {
           headers: { Authorization: `Bearer ${token}` }
         });
         console.log('Răspuns istoric:', response.data);

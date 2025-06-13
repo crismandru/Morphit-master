@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://172.20.10.3:5000';
+const API_BASE_URL = 'http://172.20.10.2:5000';
 
 const Calculator = () => {
   const navigare = useNavigation();

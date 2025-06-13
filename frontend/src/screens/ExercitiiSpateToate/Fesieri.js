@@ -17,7 +17,7 @@ const defaultExercitiiData = {
   }
 };
 
-const API_URL = 'http://172.20.10.3:5000';
+const API_URL = 'http://172.20.10.2:5000';
 
 const Fesieri = () => {
   const navigation = useNavigation();

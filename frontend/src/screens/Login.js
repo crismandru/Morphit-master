@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_URL = 'http://172.20.10.3:5000';
+const API_URL = 'http://172.20.10.2:5000';
 
 const Login = () => {
   const [nrTelefon, setNrTelefon] = useState('');

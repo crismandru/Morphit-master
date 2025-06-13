@@ -61,7 +61,7 @@ const AdaugaAntrenament = () => {
   const incarcaExercitiiDisponibile = async (grupaMusculara) => {
     try {
       console.log('Încarc exercițiile pentru grupa musculară:', grupaMusculara);
-      const response = await fetch(`http://172.20.10.3:5000/exercitii?grupaMusculara=${encodeURIComponent(grupaMusculara)}`, {
+      const response = await fetch(`http://172.20.10.2:5000/exercitii?grupaMusculara=${encodeURIComponent(grupaMusculara)}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -187,7 +187,7 @@ const AdaugaAntrenament = () => {
 
       console.log('Se trimite antrenamentul:', JSON.stringify(antrenamentNou, null, 2));
 
-      const response = await fetch('http://172.20.10.3:5000/api/antrenamente', {
+      const response = await fetch('http://172.20.10.2:5000/api/antrenamente', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

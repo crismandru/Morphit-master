@@ -24,7 +24,7 @@ const EditeazaDatePersonale = () => {
       try {
         const token = await AsyncStorage.getItem('token');
         if (token) {
-          const response = await axios.get('http://172.20.10.3:5000/detalii/obtine', {
+          const response = await axios.get('http://172.20.10.2:5000/detalii/obtine', {
             headers: { Authorization: `Bearer ${token}` }
           });
           const detalii = response.data;
@@ -58,15 +58,15 @@ const EditeazaDatePersonale = () => {
       console.log('Token:', token);
       if (token) {
         try {
-          const response = await axios.get('http://172.20.10.3:5000/detalii/obtine', {
+          const response = await axios.get('http://172.20.10.2:5000/detalii/obtine', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          await axios.put('http://172.20.10.3:5000/detalii/actualizeaza', detalii, {
+          await axios.put('http://172.20.10.2:5000/detalii/actualizeaza', detalii, {
             headers: { Authorization: `Bearer ${token}` }
           });
         } catch (error) {
           if (error.response?.status === 404) {
-            await axios.post('http://172.20.10.3:5000/detalii/adauga', detalii, {
+            await axios.post('http://172.20.10.2:5000/detalii/adauga', detalii, {
               headers: { Authorization: `Bearer ${token}` }
             });
           } else {

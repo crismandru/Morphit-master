@@ -16,7 +16,7 @@ const DetaliiPersonale = () => {
       console.log('Token:', token);
       if (token) {
         console.log('Se face cererea către server...');
-        const response = await axios.get('http://172.20.10.3:5000/detalii/obtine', {
+        const response = await axios.get('http://172.20.10.2:5000/detalii/obtine', {
           headers: { Authorization: `Bearer ${token}` }
         });
         console.log('Răspuns de la server:', response.data);

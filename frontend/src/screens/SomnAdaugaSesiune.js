@@ -142,7 +142,7 @@ const SomnAdaugaSesiune = () => {
         detaliiCalitate
       };
 
-      const response = await axios.post('http://172.20.10.3:5000/somn', sesiuneData, {
+      const response = await axios.post('http://172.20.10.2:5000/somn', sesiuneData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

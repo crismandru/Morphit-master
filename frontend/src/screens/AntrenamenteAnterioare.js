@@ -39,7 +39,7 @@ const AntrenamenteAnterioare = () => {
 
   const incarcaAntrenamente = async () => {
     try {
-      const response = await fetch('http://172.20.10.3:5000/api/antrenamente', {
+      const response = await fetch('http://172.20.10.2:5000/api/antrenamente', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -65,7 +65,7 @@ const AntrenamenteAnterioare = () => {
         { text: 'Anulează', style: 'cancel' },
         { text: 'Șterge', onPress: async () => {
           try {
-            const response = await fetch(`http://172.20.10.3:5000/api/antrenamente/${id}`, {
+            const response = await fetch(`http://172.20.10.2:5000/api/antrenamente/${id}`, {
               method: 'DELETE',
               headers: {
                 'Authorization': `Bearer ${token}`

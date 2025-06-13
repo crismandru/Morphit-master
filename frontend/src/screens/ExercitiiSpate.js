@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   butonSpate: {
     position: 'absolute',
-    top: '150%', 
+    top: '170%', 
     left: 170,  
     width: 180,
     height: 80,
@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
   },
   buton180: {
     position: 'absolute',
-    top: '440%',
-    width: 250,
+    top: '460%',
+    width: 260,
     height: 100,
     justifyContent: 'center',
     alignItems: 'center',

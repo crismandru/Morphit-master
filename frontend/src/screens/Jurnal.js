@@ -15,7 +15,7 @@ const Jurnal = () => {
       try {
         const token = await AsyncStorage.getItem('token');
         if (token) {
-          const response = await axios.get('http://172.20.10.3:5000/jurnal', {
+          const response = await axios.get('http://172.20.10.2:5000/jurnal', {
             headers: { Authorization: `Bearer ${token}` }
           });
           setNotite(response.data);
@@ -40,7 +40,7 @@ const Jurnal = () => {
           onPress: async () => {
             try {
               const token = await AsyncStorage.getItem('token');
-              await axios.delete(`http://172.20.10.3:5000/jurnal/${id}`, {
+              await axios.delete(`http://172.20.10.2:5000/jurnal/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
               });
               setNotite(notite.filter(notita => notita._id !== id));

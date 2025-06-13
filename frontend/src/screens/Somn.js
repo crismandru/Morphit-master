@@ -30,7 +30,7 @@ const Somn = () => {
       try {
         const token = await AsyncStorage.getItem('token');
         if (token) {
-          const response = await axios.get('http://172.20.10.3:5000/somn', {
+          const response = await axios.get('http://172.20.10.2:5000/somn', {
             headers: { Authorization: `Bearer ${token}` }
           });
           setSesiuniSomn(response.data);
@@ -141,7 +141,7 @@ const Somn = () => {
           onPress: async () => {
             try {
               const token = await AsyncStorage.getItem('token');
-              await axios.delete(`http://172.20.10.3:5000/somn/${id}`, {
+              await axios.delete(`http://172.20.10.2:5000/somn/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
               });
               setSesiuniSomn(sesiuniSomn.filter(sesiune => sesiune._id !== id));

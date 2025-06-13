@@ -4,10 +4,9 @@ import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 
-const API_BASE_URL = 'http://172.20.10.3:5000';
+const API_BASE_URL = 'http://172.20.10.2:5000';
 const screenWidth = Dimensions.get('window').width;
 
 const Statistici = () => {
@@ -727,7 +726,7 @@ const Statistici = () => {
                   legendFontSize: 14
                 }
               ].filter(item => item.population > 0)}
-              width={screenWidth/2.5}
+              width={200}
               height={160}
               chartConfig={{
                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
@@ -847,7 +846,7 @@ const Statistici = () => {
                   legendFontSize: 14
                 }
               ].filter(item => item.population > 0)}
-              width={screenWidth/2.5}
+              width={200}
               height={160}
               chartConfig={{
                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
@@ -1022,7 +1021,7 @@ const Statistici = () => {
                 legendFontColor: '#032851',
                 legendFontSize: 14
               })).filter(item => item.population > 0)}
-              width={screenWidth/2.5}
+              width={200}
               height={160}
               chartConfig={{
                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
@@ -1075,6 +1074,12 @@ const Statistici = () => {
   };
 
   const renderCorelatii = () => {
+    console.log('Render corelații - date disponibile:');
+    console.log('Date somn:', dateSomn.length);
+    console.log('Date alimentație:', dateAlimentatie.length);
+    console.log('Date jurnal:', dateJurnal.length);
+    console.log('Date antrenamente:', dateAntrenamente.length);
+
     // Luăm datele din ultimele 7 zile pentru toate categoriile
     const ultimele7Zile = {
       data: Array.from({ length: 7 }, (_, i) => {
@@ -1084,6 +1089,8 @@ const Statistici = () => {
       }).reverse()
     };
 
+    console.log('Ultimele 7 zile:', ultimele7Zile.data);
+
     // Pregătim datele pentru fiecare zi
     const dateCorelate = ultimele7Zile.data.map(data => {
       // Găsim înregistrările pentru ziua curentă
@@ -1091,6 +1098,13 @@ const Statistici = () => {
       const alimentatieZi = dateAlimentatie.find(a => a.data === data);
       const antrenamentZi = dateAntrenamente.find(ant => ant.data === data);
       const jurnalZi = dateJurnal.find(j => j.data === data);
+
+      console.log(`Ziua ${data}:`, {
+        somn: !!somnZi,
+        alimentatie: !!alimentatieZi,
+        antrenament: !!antrenamentZi,
+        jurnal: !!jurnalZi
+      });
 
       // Calculăm orele de somn
       let oreSomn = 0;
@@ -1126,18 +1140,26 @@ const Statistici = () => {
       };
     });
 
+    console.log('Date corelate:', dateCorelate);
+
     // Calculăm corelațiile
     const corelatii = [];
 
     // Corelație între somn și antrenamente
     const zileCuAntrenament = dateCorelate.filter(zi => zi.durataAntrenament > 0);
+    console.log('Zile cu antrenament:', zileCuAntrenament.length);
+    
     if (zileCuAntrenament.length > 0) {
       const medieOreSomnCuAntrenament = zileCuAntrenament.reduce((acc, zi) => acc + zi.oreSomn, 0) / zileCuAntrenament.length;
-      const medieOreSomnFaraAntrenament = dateCorelate
-        .filter(zi => zi.durataAntrenament === 0)
-        .reduce((acc, zi) => acc + zi.oreSomn, 0) / (dateCorelate.length - zileCuAntrenament.length);
+      const zileFaraAntrenament = dateCorelate.filter(zi => zi.durataAntrenament === 0);
+      const medieOreSomnFaraAntrenament = zileFaraAntrenament.length > 0 
+        ? zileFaraAntrenament.reduce((acc, zi) => acc + zi.oreSomn, 0) / zileFaraAntrenament.length 
+        : 0;
 
-      if (medieOreSomnCuAntrenament > medieOreSomnFaraAntrenament) {
+      console.log('Medie ore somn cu antrenament:', medieOreSomnCuAntrenament);
+      console.log('Medie ore somn fără antrenament:', medieOreSomnFaraAntrenament);
+
+      if (medieOreSomnCuAntrenament > medieOreSomnFaraAntrenament && medieOreSomnCuAntrenament > 0) {
         corelatii.push({
           titlu: "Antrenamentul Îmbunătățește Somnul",
           descriere: `Dormi cu ${(medieOreSomnCuAntrenament - medieOreSomnFaraAntrenament).toFixed(1)} ore mai mult în zilele cu antrenament`,
@@ -1147,15 +1169,21 @@ const Statistici = () => {
       }
     }
 
-    // Corelație între alimentație și antrenamente
-    const zileCuAntrenamentIntens = dateCorelate.filter(zi => zi.durataAntrenament > 45);
+    // Corelație între alimentație și antrenamente (mai permisivă)
+    const zileCuAntrenamentIntens = dateCorelate.filter(zi => zi.durataAntrenament > 30);
+    console.log('Zile cu antrenament intens:', zileCuAntrenamentIntens.length);
+    
     if (zileCuAntrenamentIntens.length > 0) {
       const medieCaloriiCuAntrenament = zileCuAntrenamentIntens.reduce((acc, zi) => acc + zi.calorii, 0) / zileCuAntrenamentIntens.length;
-      const medieCaloriiFaraAntrenament = dateCorelate
-        .filter(zi => zi.durataAntrenament <= 45)
-        .reduce((acc, zi) => acc + zi.calorii, 0) / (dateCorelate.length - zileCuAntrenamentIntens.length);
+      const zileFaraAntrenamentIntens = dateCorelate.filter(zi => zi.durataAntrenament <= 30);
+      const medieCaloriiFaraAntrenament = zileFaraAntrenamentIntens.length > 0
+        ? zileFaraAntrenamentIntens.reduce((acc, zi) => acc + zi.calorii, 0) / zileFaraAntrenamentIntens.length
+        : 0;
 
-      if (medieCaloriiCuAntrenament > medieCaloriiFaraAntrenament) {
+      console.log('Medie calorii cu antrenament intens:', medieCaloriiCuAntrenament);
+      console.log('Medie calorii fără antrenament intens:', medieCaloriiFaraAntrenament);
+
+      if (medieCaloriiCuAntrenament > medieCaloriiFaraAntrenament && medieCaloriiCuAntrenament > 0) {
         corelatii.push({
           titlu: "Alimentație Adaptată",
           descriere: `Consumi cu ${Math.round(medieCaloriiCuAntrenament - medieCaloriiFaraAntrenament)} calorii mai mult în zilele cu antrenament intens`,
@@ -1165,13 +1193,17 @@ const Statistici = () => {
       }
     }
 
-    // Corelație între somn și stare
-    const zileCuSomnBun = dateCorelate.filter(zi => zi.oreSomn >= 7);
+    // Corelație între somn și stare (mai permisivă)
+    const zileCuSomnBun = dateCorelate.filter(zi => zi.oreSomn >= 6);
+    console.log('Zile cu somn bun:', zileCuSomnBun.length);
+    
     if (zileCuSomnBun.length > 0) {
       const zileFericiteCuSomnBun = zileCuSomnBun.filter(zi => zi.stare === 'fericit').length;
       const procentFericireCuSomnBun = (zileFericiteCuSomnBun / zileCuSomnBun.length) * 100;
 
-      if (procentFericireCuSomnBun > 50) {
+      console.log('Procent fericire cu somn bun:', procentFericireCuSomnBun);
+
+      if (procentFericireCuSomnBun > 40) {
         corelatii.push({
           titlu: "Somnul Îmbunătățește Starea",
           descriere: `${Math.round(procentFericireCuSomnBun)}% din zilele cu somn bun sunt zile fericite`,
@@ -1181,13 +1213,17 @@ const Statistici = () => {
       }
     }
 
-    // Corelație între antrenamente și stare
+    // Corelație între antrenamente și stare (mai permisivă)
     const zileCuAntrenamentPentruStare = dateCorelate.filter(zi => zi.durataAntrenament > 0);
+    console.log('Zile cu antrenament pentru stare:', zileCuAntrenamentPentruStare.length);
+    
     if (zileCuAntrenamentPentruStare.length > 0) {
       const zileFericiteCuAntrenament = zileCuAntrenamentPentruStare.filter(zi => zi.stare === 'fericit').length;
       const procentFericireCuAntrenament = (zileFericiteCuAntrenament / zileCuAntrenamentPentruStare.length) * 100;
 
-      if (procentFericireCuAntrenament > 50) {
+      console.log('Procent fericire cu antrenament:', procentFericireCuAntrenament);
+
+      if (procentFericireCuAntrenament > 40) {
         corelatii.push({
           titlu: "Antrenamentul Îmbunătățește Starea",
           descriere: `${Math.round(procentFericireCuAntrenament)}% din zilele cu antrenament sunt zile fericite`,
@@ -1196,6 +1232,32 @@ const Statistici = () => {
         });
       }
     }
+
+    // Corelații suplimentare pentru cazuri cu puține date
+    if (corelatii.length === 0) {
+      // Verificăm dacă există cel puțin câteva înregistrări
+      const zileCuDate = dateCorelate.filter(zi => zi.oreSomn > 0 || zi.calorii > 0 || zi.durataAntrenament > 0 || zi.stare !== 'neutru');
+      
+      if (zileCuDate.length >= 3) {
+        // Corelație simplă - zilele cu activitate sunt mai fericite
+        const zileCuActivitate = zileCuDate.filter(zi => zi.durataAntrenament > 0 || zi.calorii > 1000);
+        if (zileCuActivitate.length > 0) {
+          const zileFericiteCuActivitate = zileCuActivitate.filter(zi => zi.stare === 'fericit').length;
+          const procentFericireCuActivitate = (zileFericiteCuActivitate / zileCuActivitate.length) * 100;
+          
+          if (procentFericireCuActivitate > 30) {
+            corelatii.push({
+              titlu: "Activitatea Îmbunătățește Starea",
+              descriere: `${Math.round(procentFericireCuActivitate)}% din zilele cu activitate sunt zile fericite`,
+              icon: "trending-up",
+              culoare: "#8caee0"
+            });
+          }
+        }
+      }
+    }
+
+    console.log('Corelații găsite:', corelatii.length);
 
     return (
       <View style={styles.section}>
@@ -1220,7 +1282,7 @@ const Statistici = () => {
             ))}
             {corelatii.length === 0 && (
               <Text style={styles.noDataText}>
-                Nu există suficiente date pentru a identifica corelații semnificative
+                Nu există suficiente date pentru a identifica corelații semnificative. Adaugă mai multe înregistrări în ultimele 7 zile pentru a vedea corelații.
               </Text>
             )}
           </View>
@@ -1627,7 +1689,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     width: '100%',
-    marginLeft: -80,
+    marginLeft: -110,
   },
   pieChart: {
     marginVertical: 8,
@@ -1639,14 +1701,16 @@ const styles = StyleSheet.create({
   },
   legendContainer: {
     flex: 1,
-    paddingLeft: 10,
+    paddingLeft: -10,
     justifyContent: 'center',
     maxWidth: '95%',
+    minWidth: 150,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 5,
+    marginBottom: 8,
+    paddingRight: 10,
   },
   legendColor: {
     width: 12,
@@ -1655,8 +1719,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   legendText: {
-    color: '#032851',
     fontSize: 14,
+    color: '#032851',
+    fontWeight: '500',
+    flex: 1,
+    flexWrap: 'wrap',
   },
   corelatiiContainer: {
     width: '100%',
