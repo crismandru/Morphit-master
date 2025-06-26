@@ -8,10 +8,6 @@ const Album = require('../models/Album');
 const autentificareToken = require('../middleware/autentificareToken');
 const { uploadsDir, photosDir, albumsDir } = require('../config/paths');
 
-console.log('Calea directorului uploads:', uploadsDir);
-console.log('Calea directorului photos:', photosDir);
-
-// Asigură existența directoarelor
 [uploadsDir, photosDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -20,13 +16,11 @@ console.log('Calea directorului photos:', photosDir);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    console.log('Salvare fișier în:', photosDir);
     cb(null, photosDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const filename = uniqueSuffix + path.extname(file.originalname);
-    console.log('Nume fișier generat:', filename);
     cb(null, filename);
   }
 });
@@ -54,9 +48,6 @@ router.get('/', autentificareToken, async (req, res) => {
 
 router.post('/', autentificareToken, upload.single('photo'), async (req, res) => {
   try {
-    console.log('Request body:', req.body);
-    console.log('Request file:', req.file);
-
     if (!req.file) {
       return res.status(400).json({ message: 'Nu s-a încărcat nicio poză' });
     }
@@ -67,7 +58,6 @@ router.post('/', autentificareToken, upload.single('photo'), async (req, res) =>
     }
 
     const filePath = path.join(photosDir, req.file.filename);
-    console.log('Verificare fișier la:', filePath);
     if (!fs.existsSync(filePath)) {
       console.error('Fișierul nu există la calea:', filePath);
       return res.status(500).json({ message: 'Eroare la salvarea fișierului' });
@@ -81,7 +71,6 @@ router.post('/', autentificareToken, upload.single('photo'), async (req, res) =>
     });
 
     await poza.save();
-    console.log('Poză salvată:', poza);
     res.status(201).json(poza);
   } catch (error) {
     console.error('Eroare la încărcarea pozei:', error);
@@ -91,7 +80,6 @@ router.post('/', autentificareToken, upload.single('photo'), async (req, res) =>
 
 router.delete('/:id', autentificareToken, async (req, res) => {
   try {
-    console.log('Încercare ștergere poză:', req.params.id);
     const poza = await Poza.findOne({ _id: req.params.id, user: req.user.id });
     
     if (!poza) {
@@ -105,7 +93,6 @@ router.delete('/:id', autentificareToken, async (req, res) => {
     );
 
     const photoPath = path.join(__dirname, '../..', poza.url);
-    console.log('Cale fișier pentru ștergere:', photoPath);
     
     if (fs.existsSync(photoPath)) {
       fs.unlinkSync(photoPath);

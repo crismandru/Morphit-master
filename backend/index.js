@@ -9,7 +9,6 @@ const exercitiiDir = path.join(uploadsDir, 'exercitii');
 
 const app = express(); 
 
-// Connect Database
 console.log('Se încearcă conectarea la MongoDB...');
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Conectat la MongoDB'))
@@ -18,33 +17,28 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1);
   });
 
-// Init Middleware
 app.use(express.json());
 app.use(cors());
 
-// Creează directoarele necesare dacă nu există
-console.log('Calea directorului uploads:', uploadsDir);
-console.log('Calea directorului photos:', photosDir);
-console.log('Calea directorului albums:', albumsDir);
-console.log('Calea directorului exercitii:', exercitiiDir);
-
-[uploadsDir, photosDir, albumsDir, exercitiiDir].forEach(dir => {
+[uploadsDir, photosDir, exercitiiDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
-    console.log(`Creare director ${dir.split('/').pop()}`);
     fs.mkdirSync(dir, { recursive: true });
   }
 });
 
-// Servire fișiere statice din directorul uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Middleware pentru logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  if (req.method === 'POST' && req.url === '/jurnal') {
+    console.log('Body pentru POST /jurnal:', JSON.stringify(req.body, null, 2));
+  }
+  if (req.method === 'POST' && req.url === '/somn') {
+    console.log('Body pentru POST /somn:', JSON.stringify(req.body, null, 2));
+  }
   next();
 });
 
-// Middleware pentru gestionarea erorilor
 app.use((err, req, res, next) => {
   console.error('Eroare globală:', {
     error: err.message,
@@ -95,5 +89,4 @@ const HOST = '172.20.10.2';
 app.listen(PORT, () => {
   console.log(`Serverul rulează pe portul ${PORT}`);
   console.log(`URL pentru acces: http://${HOST}:${PORT}`);
-  console.log(`Directorul pentru fișiere statice: ${uploadsDir}`);
 });

@@ -14,8 +14,16 @@ const userSchema = new mongoose.Schema({
   },
   parola: {
     type: String,
-    required: true
+    required: true,
+    validate: {
+      validator: function(v) {
+        return v.length >= 8 && /[A-Z]/.test(v) && /[0-9]/.test(v);
+      },
+      message: 'Parola trebuie să aibă minim 8 caractere, o literă mare și o cifră!'
+    }
   }
 });
 
 module.exports = mongoose.model('User', userSchema);
+
+

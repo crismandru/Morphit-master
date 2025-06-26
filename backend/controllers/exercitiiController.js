@@ -1,6 +1,6 @@
 const Exercitiu = require('../models/Exercitiu');
 
-// Adaugă un exercițiu nou
+
 exports.adaugaExercitiu = async (req, res, next) => {
   try {
     console.log('Utilizator autentificat:', req.user);
@@ -14,33 +14,17 @@ exports.adaugaExercitiu = async (req, res, next) => {
       grupaMusculara, 
       isDefault 
     } = req.body;
-
-    console.log('Date primite pentru exercițiu:', {
-      nume,
-      descriere,
-      muschiAntrenati,
-      echipament,
-      video,
-      animatie,
-      grupaMusculara,
-      isDefault
-    });
-
-    // Verifică dacă exercițiul există deja (pentru exerciții predefinite)
     if (isDefault) {
       const exercitiuExistent = await Exercitiu.findOne({ 
         nume, 
         isDefault: true 
       });
-      
       if (exercitiuExistent) {
-        console.log('Exercițiu predefinit existent:', exercitiuExistent);
         return res.status(400).json({ 
           mesaj: 'Acest exercițiu predefinit există deja' 
         });
       }
     }
-
     const exercitiuNou = new Exercitiu({
       nume,
       descriere,
@@ -52,11 +36,7 @@ exports.adaugaExercitiu = async (req, res, next) => {
       isDefault,
       utilizator: isDefault ? undefined : req.user.id
     });
-
-    console.log('Încercare salvare exercițiu nou:', exercitiuNou);
     await exercitiuNou.save();
-    console.log('Exercițiu salvat cu succes:', exercitiuNou);
-    
     res.status(201).json(exercitiuNou);
   } catch (error) {
     console.error('Eroare detaliată la adăugarea exercițiului:', error);
@@ -64,13 +44,9 @@ exports.adaugaExercitiu = async (req, res, next) => {
   }
 };
 
-// Verifică existența unui exercițiu
 exports.verificaExercitiu = async (req, res, next) => {
   try {
     const nume = decodeURIComponent(req.params.nume);
-    console.log('Verificare exercițiu:', { nume, utilizator: req.user.id });
-
-    // Caută exercițiul fie ca predefinit, fie ca personalizat pentru utilizatorul curent
     const exercitiu = await Exercitiu.findOne({
       $or: [
         { nume, isDefault: true },

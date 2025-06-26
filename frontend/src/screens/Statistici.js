@@ -23,15 +23,23 @@ const Statistici = () => {
     alimentatie: true,
     jurnal: true,
     antrenamente: true,
-    corelatii: true
+    overall: true
   });
   const [modalGraficVizibil, setModalGraficVizibil] = useState(false);
   const [graficSelectat, setGraficSelectat] = useState(null);
   const [dateGrafic, setDateGrafic] = useState(null);
+  const [filtruPerioada, setFiltruPerioada] = useState('toate'); 
 
   useEffect(() => {
     preiaDate();
   }, []);
+
+  useEffect(() => {
+    if (filtruPerioada && dateSomn.length > 0) {
+      console.log('Reîncărcare date din cauza schimbării filtrarei perioadei');
+      preiaDate();
+    }
+  }, [filtruPerioada]);
 
   const preiaDate = async () => {
     try {
@@ -43,18 +51,21 @@ const Statistici = () => {
         return;
       }
 
+      console.log('Se preiau datele pentru statistici cu filtrarea:', filtruPerioada);
+
       try {
         const raspunsSomn = await axios.get(`${API_BASE_URL}/somn`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('Răspuns somn:', raspunsSomn.data);
+        console.log('Răspuns somn brut:', raspunsSomn.data);
         if (raspunsSomn.data && Array.isArray(raspunsSomn.data)) {
           const dateSortate = raspunsSomn.data
             .filter(zi => zi && zi.data && zi.oraAdormire && zi.oraTrezire)
-            .sort((a, b) => new Date(b.data) - new Date(a.data));
+            .sort((a, b) => new Date(a.data) - new Date(b.data));
+          console.log('Date somn sortate:', dateSortate.length);
           setDateSomn(dateSortate);
         } else {
-          console.log('Format date somn invalid:', raspunsSomn.data);
+          console.log('Format date somn invalid sau gol:', raspunsSomn.data);
           setDateSomn([]);
         }
       } catch (error) {
@@ -62,16 +73,17 @@ const Statistici = () => {
         setDateSomn([]);
       }
 
-      // Preluăm datele pentru alimentație
       try {
         const raspunsAlimentatie = await axios.get(`${API_BASE_URL}/alimentatie/istoric`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log('Răspuns alimentație brut:', raspunsAlimentatie.data);
         if (raspunsAlimentatie.data && Array.isArray(raspunsAlimentatie.data)) {
-          const dateSortate = raspunsAlimentatie.data.sort((a, b) => new Date(b.data) - new Date(a.data));
+          const dateSortate = raspunsAlimentatie.data.sort((a, b) => new Date(a.data) - new Date(b.data));
+          console.log('Date alimentație sortate:', dateSortate.length);
           setDateAlimentatie(dateSortate);
         } else {
-          console.log('Format date alimentație invalid:', raspunsAlimentatie.data);
+          console.log('Format date alimentație invalid sau gol:', raspunsAlimentatie.data);
           setDateAlimentatie([]);
         }
       } catch (error) {
@@ -79,19 +91,19 @@ const Statistici = () => {
         setDateAlimentatie([]);
       }
 
-      // Preluăm datele pentru jurnal
       try {
         const raspunsJurnal = await axios.get(`${API_BASE_URL}/jurnal`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('Răspuns jurnal:', raspunsJurnal.data);
+        console.log('Răspuns jurnal brut:', raspunsJurnal.data);
         if (raspunsJurnal.data && Array.isArray(raspunsJurnal.data)) {
           const dateSortate = raspunsJurnal.data
             .filter(zi => zi && zi.data && zi.stare)
-            .sort((a, b) => new Date(b.data) - new Date(a.data));
+            .sort((a, b) => new Date(a.data) - new Date(b.data));
+          console.log('Date jurnal sortate:', dateSortate.length);
           setDateJurnal(dateSortate);
         } else {
-          console.log('Format date jurnal invalid:', raspunsJurnal.data);
+          console.log('Format date jurnal invalid sau gol:', raspunsJurnal.data);
           setDateJurnal([]);
         }
       } catch (error) {
@@ -99,16 +111,17 @@ const Statistici = () => {
         setDateJurnal([]);
       }
 
-      // Preluăm datele pentru antrenamente
       try {
         const raspunsAntrenamente = await axios.get(`${API_BASE_URL}/api/antrenamente`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log('Răspuns antrenamente brut:', raspunsAntrenamente.data);
         if (raspunsAntrenamente.data && Array.isArray(raspunsAntrenamente.data)) {
-          const dateSortate = raspunsAntrenamente.data.sort((a, b) => new Date(b.data) - new Date(a.data));
+          const dateSortate = raspunsAntrenamente.data.sort((a, b) => new Date(a.data) - new Date(b.data));
+          console.log('Date antrenamente sortate:', dateSortate.length);
           setDateAntrenamente(dateSortate);
         } else {
-          console.log('Format date antrenamente invalid:', raspunsAntrenamente.data);
+          console.log('Format date antrenamente invalid sau gol:', raspunsAntrenamente.data);
           setDateAntrenamente([]);
         }
       } catch (error) {
@@ -121,6 +134,15 @@ const Statistici = () => {
       setError('A apărut o eroare la încărcarea datelor');
     } finally {
       setLoading(false);
+      setTimeout(() => {
+        console.log('=== VERIFICARE FINALĂ ===');
+        console.log('Date somn:', dateSomn.length);
+        console.log('Date alimentație:', dateAlimentatie.length);
+        console.log('Date jurnal:', dateJurnal.length);
+        console.log('Date antrenamente:', dateAntrenamente.length);
+        console.log('Filtrare perioada:', filtruPerioada);
+        console.log('=======================');
+      }, 100);
     }
   };
 
@@ -129,6 +151,31 @@ const Statistici = () => {
       ...prev,
       [filter]: !prev[filter]
     }));
+  };
+
+  const filtreazaDateDupaPerioada = (date) => {
+    if (!date || date.length === 0) {
+      return [];
+    }
+    
+    if (filtruPerioada === 'toate') {
+      return date;
+    }
+    
+    if (filtruPerioada === 'ultimele7') {
+      const acum7Zile = new Date();
+      acum7Zile.setDate(acum7Zile.getDate() - 7);
+      const dataAcum7Zile = acum7Zile.toISOString().split('T')[0]; 
+      
+      const dateFiltrate = date.filter(item => {
+        if (!item.data) return false;
+        return item.data >= dataAcum7Zile;
+      });
+      
+      return dateFiltrate;
+    }
+    
+    return date;
   };
 
   const renderFilterModal = () => (
@@ -144,6 +191,29 @@ const Statistici = () => {
             <Text style={styles.modalTitle}>Filtrează Statisticile</Text>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Icon name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.perioadaContainer}>
+            <Text style={styles.perioadaTitle}>Perioada de timp:</Text>
+            <TouchableOpacity 
+              style={[styles.perioadaButton, filtruPerioada === 'toate' && styles.perioadaButtonActive]}
+              onPress={() => setFiltruPerioada('toate')}
+            >
+              <Icon name="calendar" size={20} color={filtruPerioada === 'toate' ? "#fff" : "#8caee0"} />
+              <Text style={[styles.perioadaButtonText, filtruPerioada === 'toate' && styles.perioadaButtonTextActive]}>
+                Toate zilele
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.perioadaButton, filtruPerioada === 'ultimele7' && styles.perioadaButtonActive]}
+              onPress={() => setFiltruPerioada('ultimele7')}
+            >
+              <Icon name="time" size={20} color={filtruPerioada === 'ultimele7' ? "#fff" : "#8caee0"} />
+              <Text style={[styles.perioadaButtonText, filtruPerioada === 'ultimele7' && styles.perioadaButtonTextActive]}>
+                Ultimele 7 zile
+              </Text>
             </TouchableOpacity>
           </View>
           
@@ -188,12 +258,12 @@ const Statistici = () => {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.modalFilterButton, activeFilters.corelatii && styles.modalFilterButtonActive]}
-            onPress={() => toggleFilter('corelatii')}
+            style={[styles.modalFilterButton, activeFilters.overall && styles.modalFilterButtonActive]}
+            onPress={() => toggleFilter('overall')}
           >
-            <Icon name="analytics" size={24} color={activeFilters.corelatii ? "#fff" : "#8caee0"} />
-            <Text style={[styles.modalFilterButtonText, activeFilters.corelatii && styles.modalFilterButtonTextActive]}>
-              Corelații
+            <Icon name="stats-chart" size={24} color={activeFilters.overall ? "#fff" : "#8caee0"} />
+            <Text style={[styles.modalFilterButtonText, activeFilters.overall && styles.modalFilterButtonTextActive]}>
+              Overall
             </Text>
           </TouchableOpacity>
         </View>
@@ -357,13 +427,12 @@ const Statistici = () => {
   );
 
   const renderStatisticiSomn = () => {
-    // Luăm ultimele 7 zile și le sortăm cronologic
-    const ultimele7Zile = dateSomn
+    const dateFiltrate = dateSomn
       .filter(zi => zi && zi.data && zi.oraAdormire && zi.oraTrezire)
-      .sort((a, b) => new Date(a.data) - new Date(b.data))
-      .slice(-7);
+      .sort((a, b) => new Date(a.data) - new Date(b.data));
+    const datePentruAfisare = filtruPerioada === 'ultimele7' ? dateFiltrate.slice(-7) : dateFiltrate;
 
-    if (ultimele7Zile.length === 0) {
+    if (datePentruAfisare.length === 0) {
       return (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -377,14 +446,12 @@ const Statistici = () => {
       );
     }
 
-    // Formatăm datele pentru afișare
-    const date = ultimele7Zile.map(zi => {
+    const date = datePentruAfisare.map(zi => {
       const data = new Date(zi.data);
       return `${data.getDate()}/${data.getMonth() + 1}`;
     });
 
-    // Calculăm orele de somn pentru fiecare zi
-    const oreSomn = ultimele7Zile.map(zi => {
+    const oreSomn = datePentruAfisare.map(zi => {
       if (!zi.oraAdormire || !zi.oraTrezire) return 0;
       try {
         const [oreAdormire, minuteAdormire] = zi.oraAdormire.split(':').map(Number);
@@ -410,7 +477,6 @@ const Statistici = () => {
       }
     });
 
-    // Calculăm media orelor de somn
     const mediaOreSomn = oreSomn.reduce((acc, ore) => acc + ore, 0) / oreSomn.length;
 
     return (
@@ -516,7 +582,7 @@ const Statistici = () => {
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>
-              {ultimele7Zile.filter(zi => zi.rating && zi.rating >= 4).length}
+              {datePentruAfisare.filter(zi => zi.rating && zi.rating >= 4).length}
             </Text>
             <Text style={styles.statLabel}>Nopți bune</Text>
           </View>
@@ -526,13 +592,12 @@ const Statistici = () => {
   };
 
   const renderStatisticiAlimentatie = () => {
-    // Luăm ultimele 7 zile și le sortăm cronologic
-    const ultimele7Zile = dateAlimentatie
+    const dateFiltrate = dateAlimentatie
       .filter(zi => zi && zi.data && zi.mese && zi.mese.length > 0)
-      .sort((a, b) => new Date(a.data) - new Date(b.data))
-      .slice(-7);
+      .sort((a, b) => new Date(a.data) - new Date(b.data));
+    const datePentruAfisare = filtruPerioada === 'ultimele7' ? dateFiltrate.slice(-7) : dateFiltrate;
 
-    if (ultimele7Zile.length === 0) {
+    if (datePentruAfisare.length === 0) {
       return (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -546,43 +611,38 @@ const Statistici = () => {
       );
     }
 
-    // Formatăm datele pentru afișare
-    const date = ultimele7Zile.map(zi => {
+    const date = datePentruAfisare.map(zi => {
       if (!zi.data) return '';
       try {
-        // Verificăm dacă data este în format DD.MM.YYYY
-        const [ziua, luna] = zi.data.split('.');
-        if (ziua && luna) {
-          return `${ziua}/${luna}`;
+        if (zi.data.includes('.')) {
+          const [ziua, luna] = zi.data.split('.');
+          if (ziua && luna) {
+            return `${parseInt(ziua)}/${parseInt(luna)}`;
+          }
         }
-        // Verificăm dacă data este în format ISO (YYYY-MM-DD)
-        const [an, lunaISO, ziuaISO] = zi.data.split('-');
-        if (an && lunaISO && ziuaISO) {
-          return `${ziuaISO}/${lunaISO}`;
+        if (zi.data.includes('-')) {
+          const [an, lunaISO, ziuaISO] = zi.data.split('-');
+          if (an && lunaISO && ziuaISO) {
+            return `${parseInt(ziuaISO)}/${parseInt(lunaISO)}`;
+          }
         }
-        // Dacă nu este în niciunul din formatele așteptate, încercăm să o parsam
         const data = new Date(zi.data);
         if (isNaN(data.getTime())) {
           console.log('Data invalida:', zi.data);
           return '';
         }
-        const ziuaFormatata = data.getDate().toString().padStart(2, '0');
-        const lunaFormatata = (data.getMonth() + 1).toString().padStart(2, '0');
-        return `${ziuaFormatata}/${lunaFormatata}`;
+        return `${data.getDate()}/${data.getMonth() + 1}`;
       } catch (error) {
         console.error('Eroare la formatarea datei:', error, zi.data);
         return '';
       }
     });
 
-    // Calculăm caloriile pentru fiecare zi
-    const calorii = ultimele7Zile.map(zi => {
+    const calorii = datePentruAfisare.map(zi => {
       const caloriiZi = zi.mese.reduce((acc, masa) => acc + (masa.calorii || 0), 0);
       return Math.round(caloriiZi);
     });
-
-    // Calculăm macronutrienții pentru toate zilele
-    const macronutrienti = ultimele7Zile.reduce((acc, zi) => {
+    const macronutrienti = datePentruAfisare.reduce((acc, zi) => {
       const ziMacro = zi.mese.reduce((sum, masa) => ({
         proteine: sum.proteine + (masa.proteine || 0),
         carbohidrati: sum.carbohidrati + (masa.carbohidrati || 0),
@@ -598,7 +658,6 @@ const Statistici = () => {
 
     const totalMacronutrienti = macronutrienti.proteine + macronutrienti.carbohidrati + macronutrienti.grasimi;
 
-    // Calculăm procentele pentru macronutrienți
     const procenteMacro = {
       proteine: Math.round((macronutrienti.proteine / totalMacronutrienti) * 100) || 0,
       carbohidrati: Math.round((macronutrienti.carbohidrati / totalMacronutrienti) * 100) || 0,
@@ -763,7 +822,7 @@ const Statistici = () => {
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>
-              {ultimele7Zile.filter(zi => 
+              {datePentruAfisare.filter(zi => 
                 zi.mese.reduce((acc, masa) => acc + (masa.calorii || 0), 0) > (zi.obiective?.calorii || 2000)
               ).length}
             </Text>
@@ -775,9 +834,12 @@ const Statistici = () => {
   };
 
   const renderStatisticiJurnal = () => {
-    const ultimele7Zile = dateJurnal.slice(-7);
+    const dateFiltrate = dateJurnal
+      .filter(zi => zi && zi.data && zi.stare)
+      .sort((a, b) => new Date(a.data) - new Date(b.data));
+    const datePentruAfisare = filtruPerioada === 'ultimele7' ? dateFiltrate.slice(-7) : dateFiltrate;
     
-    if (ultimele7Zile.length === 0) {
+    if (datePentruAfisare.length === 0) {
       return (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -791,10 +853,24 @@ const Statistici = () => {
       );
     }
 
-    const totalNotite = ultimele7Zile.length;
-    const notiteFericite = ultimele7Zile.filter(zi => zi.stare === 'fericit').length;
-    const notiteNeutre = ultimele7Zile.filter(zi => zi.stare === 'neutru').length;
-    const notiteTriste = ultimele7Zile.filter(zi => zi.stare === 'trist').length;
+    const date = datePentruAfisare.map(zi => {
+      const data = new Date(zi.data);
+      return `${data.getDate()}/${data.getMonth() + 1}`;
+    });
+
+    const stariNumerice = datePentruAfisare.map(zi => {
+      switch (zi.stare) {
+        case 'fericit': return 3;
+        case 'neutru': return 2;
+        case 'trist': return 1;
+        default: return 2;
+      }
+    });
+
+    const totalNotite = datePentruAfisare.length;
+    const notiteFericite = datePentruAfisare.filter(zi => zi.stare === 'fericit').length;
+    const notiteNeutre = datePentruAfisare.filter(zi => zi.stare === 'neutru').length;
+    const notiteTriste = datePentruAfisare.filter(zi => zi.stare === 'trist').length;
 
     const totalStari = notiteFericite + notiteNeutre + notiteTriste;
 
@@ -818,6 +894,102 @@ const Statistici = () => {
           <Icon name="journal" size={24} color="#8caee0" />
           <Text style={styles.sectionTitle}>Statistici Jurnal</Text>
         </View>
+
+        <TouchableOpacity 
+          style={[styles.card, styles.graphCard]}
+          onPress={() => {
+            setGraficSelectat({
+              tip: 'line',
+              titlu: 'Starea de spirit',
+              sufix: ''
+            });
+            setDateGrafic({
+              labels: date,
+              datasets: [{ data: stariNumerice }]
+            });
+            setModalGraficVizibil(true);
+          }}
+        >
+          <View style={styles.cardHeader}>
+            <Text style={styles.graphCardTitle}>Starea de spirit</Text>
+            <View style={styles.expandIconContainer}>
+              <Icon name="expand" size={20} color="#fff" />
+            </View>
+          </View>
+          <LineChart
+            data={{
+              labels: date,
+              datasets: [{
+                data: stariNumerice
+              }]
+            }}
+            width={screenWidth - 80}
+            height={200}
+            chartConfig={{
+              backgroundColor: 'transparent',
+              backgroundGradientFrom: 'transparent',
+              backgroundGradientTo: 'transparent',
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(140, 174, 224, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              style: {
+                borderRadius: 16,
+              },
+              propsForLabels: {
+                fontSize: 12,
+                fill: '#fff',
+              },
+              propsForBackgroundLines: {
+                stroke: 'rgba(255, 255, 255, 0.1)',
+                strokeWidth: 1,
+              },
+              propsForDots: {
+                r: '4',
+                strokeWidth: '2',
+                stroke: '#8caee0',
+              },
+              formatYLabel: (value) => {
+                switch (parseInt(value)) {
+                  case 1: return 'Trist';
+                  case 2: return 'Neutru';
+                  case 3: return 'Fericit';
+                  default: return '';
+                }
+              },
+            }}
+            bezier
+            style={[styles.chart, { marginHorizontal: -10 }]}
+            fromZero
+            withInnerLines={true}
+            withOuterLines={true}
+            withVerticalLines={true}
+            withHorizontalLines={true}
+            withVerticalLabels={true}
+            withHorizontalLabels={true}
+            segments={2}
+            yAxisSuffix=""
+            yAxisInterval={1}
+            renderDotContent={({ x, y, index, data }) => {
+              if (!data || !data[index]) return null;
+              const stare = stariNumerice[index];
+              const stareText = stare === 1 ? 'Trist' : stare === 2 ? 'Neutru' : 'Fericit';
+              return (
+                <View style={{
+                  position: 'absolute',
+                  top: y - 20,
+                  left: x - 15,
+                  backgroundColor: 'rgba(140, 174, 224, 0.9)',
+                  padding: 4,
+                  borderRadius: 4,
+                }}>
+                  <Text style={{ color: '#fff', fontSize: 10 }}>
+                    {stareText}
+                  </Text>
+                </View>
+              );
+            }}
+          />
+        </TouchableOpacity>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Distribuția Stărilor</Text>
@@ -891,13 +1063,12 @@ const Statistici = () => {
   };
 
   const renderStatisticiAntrenamente = () => {
-    // Luăm ultimele 7 zile și le sortăm cronologic
-    const ultimele7Zile = dateAntrenamente
+    const dateFiltrate = dateAntrenamente
       .filter(antrenament => antrenament && antrenament.data && antrenament.exercitii)
-      .sort((a, b) => new Date(a.data) - new Date(b.data))
-      .slice(-7);
+      .sort((a, b) => new Date(a.data) - new Date(b.data));
+    const datePentruAfisare = filtruPerioada === 'ultimele7' ? dateFiltrate.slice(-7) : dateFiltrate;
 
-    if (ultimele7Zile.length === 0) {
+    if (datePentruAfisare.length === 0) {
       return (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -911,23 +1082,35 @@ const Statistici = () => {
       );
     }
 
-    // Formatăm datele pentru afișare
-    const date = ultimele7Zile.map(antrenament => {
+    const date = datePentruAfisare.map(antrenament => {
       const data = new Date(antrenament.data);
       return `${data.getDate()}/${data.getMonth() + 1}`;
     });
+    const durata = datePentruAfisare.map(antrenament => parseInt(antrenament.timp) || 0);
 
-    // Calculăm durata antrenamentelor pentru fiecare zi
-    const durata = ultimele7Zile.map(antrenament => parseInt(antrenament.timp) || 0);
-
-    // Calculăm distribuția tipurilor de antrenamente
-    const tipuriAntrenamente = ultimele7Zile.reduce((acc, antrenament) => {
+    const tipuriAntrenamente = datePentruAfisare.reduce((acc, antrenament) => {
       const tip = antrenament.tip || 'Personalizat';
       acc[tip] = (acc[tip] || 0) + 1;
       return acc;
     }, {});
 
     const totalAntrenamente = Object.values(tipuriAntrenamente).reduce((a, b) => a + b, 0);
+
+    const toateExercitiile = datePentruAfisare.flatMap(ant => ant.exercitii || []);
+    const countGrupe = {};
+    toateExercitiile.forEach(ex => {
+      if (ex.grupaDeMuschi) {
+        countGrupe[ex.grupaDeMuschi] = (countGrupe[ex.grupaDeMuschi] || 0) + 1;
+      }
+    });
+    const grupaPreferata = Object.entries(countGrupe).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+    const countExercitii = {};
+    toateExercitiile.forEach(ex => {
+      if (ex.numeExercitiu) {
+        countExercitii[ex.numeExercitiu] = (countExercitii[ex.numeExercitiu] || 0) + 1;
+      }
+    });
+    const exercitiuPreferat = Object.entries(countExercitii).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
 
     return (
       <View style={styles.section}>
@@ -936,7 +1119,6 @@ const Statistici = () => {
           <Text style={styles.sectionTitle}>Statistici Antrenamente</Text>
         </View>
 
-        {/* Grafic durata antrenamente */}
         <TouchableOpacity 
           style={[styles.card, styles.graphCard]}
           onPress={() => {
@@ -1004,13 +1186,29 @@ const Statistici = () => {
             segments={5}
             yAxisSuffix=""
             yAxisInterval={1}
+            renderDotContent={({ x, y, index, data }) => {
+              if (!data || !data[index]) return null;
+              return (
+                <View style={{
+                  position: 'absolute',
+                  top: y - 20,
+                  left: x - 15,
+                  backgroundColor: 'rgba(140, 174, 224, 0.9)',
+                  padding: 4,
+                  borderRadius: 4,
+                }}>
+                  <Text style={{ color: '#fff', fontSize: 10 }}>
+                    {Number(data[index])}
+                  </Text>
+                </View>
+              );
+            }}
           />
         </TouchableOpacity>
 
-        {/* Distribuția tipurilor de antrenamente */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Distribuția Tipurilor de Antrenamente</Text>
-          <View style={styles.pieChartContainer}>
+          <View style={[styles.pieChartContainer, { marginLeft: -140 }]}>
             <PieChart
               data={Object.entries(tipuriAntrenamente).map(([tip, count]) => ({
                 name: tip,
@@ -1034,7 +1232,7 @@ const Statistici = () => {
               absolute
               hasLegend={false}
             />
-            <View style={styles.legendContainer}>
+            <View style={[styles.legendContainer, { paddingLeft: -20 }]}>
               {Object.entries(tipuriAntrenamente).map(([tip, count]) => {
                 const procent = Math.round((count / totalAntrenamente) * 100) || 0;
                 if (procent === 0) return null;
@@ -1054,7 +1252,6 @@ const Statistici = () => {
           </View>
         </View>
 
-        {/* Statistici generale */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>
@@ -1064,250 +1261,123 @@ const Statistici = () => {
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>
-              {Math.round(ultimele7Zile.reduce((acc, ant) => acc + ant.exercitii.length, 0) / ultimele7Zile.length)}
+              {Math.round(datePentruAfisare.reduce((acc, ant) => acc + ant.exercitii.length, 0) / datePentruAfisare.length)}
             </Text>
             <Text style={styles.statLabel}>Medie exerciții/zi</Text>
+          </View>
+        </View>
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Text style={[styles.statLabel, { fontSize: 16, color: '#8caee0', marginBottom: 5 }]}>Grupa musculară preferată</Text>
+            <Text style={[styles.statValue, { textAlign: 'center' }]}>{grupaPreferata}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statLabel, { fontSize: 16, color: '#8caee0', marginBottom: 5 }]}>Exercițiul preferat</Text>
+            <Text style={[styles.statValue, { textAlign: 'center' }]}>{exercitiuPreferat}</Text>
           </View>
         </View>
       </View>
     );
   };
 
-  const renderCorelatii = () => {
-    console.log('Render corelații - date disponibile:');
-    console.log('Date somn:', dateSomn.length);
-    console.log('Date alimentație:', dateAlimentatie.length);
-    console.log('Date jurnal:', dateJurnal.length);
-    console.log('Date antrenamente:', dateAntrenamente.length);
-
-    // Luăm datele din ultimele 7 zile pentru toate categoriile
-    const ultimele7Zile = {
-      data: Array.from({ length: 7 }, (_, i) => {
-        const data = new Date();
-        data.setDate(data.getDate() - i);
-        return data.toISOString().split('T')[0];
-      }).reverse()
-    };
-
-    console.log('Ultimele 7 zile:', ultimele7Zile.data);
-
-    // Pregătim datele pentru fiecare zi
-    const dateCorelate = ultimele7Zile.data.map(data => {
-      // Găsim înregistrările pentru ziua curentă
-      const somnZi = dateSomn.find(s => s.data === data);
-      const alimentatieZi = dateAlimentatie.find(a => a.data === data);
-      const antrenamentZi = dateAntrenamente.find(ant => ant.data === data);
-      const jurnalZi = dateJurnal.find(j => j.data === data);
-
-      console.log(`Ziua ${data}:`, {
-        somn: !!somnZi,
-        alimentatie: !!alimentatieZi,
-        antrenament: !!antrenamentZi,
-        jurnal: !!jurnalZi
-      });
-
-      // Calculăm orele de somn
-      let oreSomn = 0;
-      if (somnZi && somnZi.oraAdormire && somnZi.oraTrezire) {
-        const [oreAdormire, minuteAdormire] = somnZi.oraAdormire.split(':').map(Number);
-        const [oreTrezire, minuteTrezire] = somnZi.oraTrezire.split(':').map(Number);
-        let ore = oreTrezire - oreAdormire;
-        let minute = minuteTrezire - minuteAdormire;
-        if (minute < 0) {
-          ore -= 1;
-          minute += 60;
-        }
-        if (ore < 0) ore += 24;
-        oreSomn = ore + (minute / 60);
-      }
-
-      // Calculăm caloriile
-      const calorii = alimentatieZi?.mese?.reduce((acc, masa) => acc + (masa.calorii || 0), 0) || 0;
-
-      // Calculăm durata antrenamentului
-      const durataAntrenament = antrenamentZi ? parseInt(antrenamentZi.timp) || 0 : 0;
-
-      // Obținem starea din jurnal
-      const stare = jurnalZi?.stare || 'neutru';
-
-      return {
-        data,
-        oreSomn,
-        calorii,
-        durataAntrenament,
-        stare,
-        ratingSomn: somnZi?.rating || 0
-      };
-    });
-
-    console.log('Date corelate:', dateCorelate);
-
-    // Calculăm corelațiile
-    const corelatii = [];
-
-    // Corelație între somn și antrenamente
-    const zileCuAntrenament = dateCorelate.filter(zi => zi.durataAntrenament > 0);
-    console.log('Zile cu antrenament:', zileCuAntrenament.length);
-    
-    if (zileCuAntrenament.length > 0) {
-      const medieOreSomnCuAntrenament = zileCuAntrenament.reduce((acc, zi) => acc + zi.oreSomn, 0) / zileCuAntrenament.length;
-      const zileFaraAntrenament = dateCorelate.filter(zi => zi.durataAntrenament === 0);
-      const medieOreSomnFaraAntrenament = zileFaraAntrenament.length > 0 
-        ? zileFaraAntrenament.reduce((acc, zi) => acc + zi.oreSomn, 0) / zileFaraAntrenament.length 
-        : 0;
-
-      console.log('Medie ore somn cu antrenament:', medieOreSomnCuAntrenament);
-      console.log('Medie ore somn fără antrenament:', medieOreSomnFaraAntrenament);
-
-      if (medieOreSomnCuAntrenament > medieOreSomnFaraAntrenament && medieOreSomnCuAntrenament > 0) {
-        corelatii.push({
-          titlu: "Antrenamentul Îmbunătățește Somnul",
-          descriere: `Dormi cu ${(medieOreSomnCuAntrenament - medieOreSomnFaraAntrenament).toFixed(1)} ore mai mult în zilele cu antrenament`,
-          icon: "moon",
-          culoare: "#4ECDC4"
-        });
-      }
-    }
-
-    // Corelație între alimentație și antrenamente (mai permisivă)
-    const zileCuAntrenamentIntens = dateCorelate.filter(zi => zi.durataAntrenament > 30);
-    console.log('Zile cu antrenament intens:', zileCuAntrenamentIntens.length);
-    
-    if (zileCuAntrenamentIntens.length > 0) {
-      const medieCaloriiCuAntrenament = zileCuAntrenamentIntens.reduce((acc, zi) => acc + zi.calorii, 0) / zileCuAntrenamentIntens.length;
-      const zileFaraAntrenamentIntens = dateCorelate.filter(zi => zi.durataAntrenament <= 30);
-      const medieCaloriiFaraAntrenament = zileFaraAntrenamentIntens.length > 0
-        ? zileFaraAntrenamentIntens.reduce((acc, zi) => acc + zi.calorii, 0) / zileFaraAntrenamentIntens.length
-        : 0;
-
-      console.log('Medie calorii cu antrenament intens:', medieCaloriiCuAntrenament);
-      console.log('Medie calorii fără antrenament intens:', medieCaloriiFaraAntrenament);
-
-      if (medieCaloriiCuAntrenament > medieCaloriiFaraAntrenament && medieCaloriiCuAntrenament > 0) {
-        corelatii.push({
-          titlu: "Alimentație Adaptată",
-          descriere: `Consumi cu ${Math.round(medieCaloriiCuAntrenament - medieCaloriiFaraAntrenament)} calorii mai mult în zilele cu antrenament intens`,
-          icon: "nutrition",
-          culoare: "#FF6B6B"
-        });
-      }
-    }
-
-    // Corelație între somn și stare (mai permisivă)
-    const zileCuSomnBun = dateCorelate.filter(zi => zi.oreSomn >= 6);
-    console.log('Zile cu somn bun:', zileCuSomnBun.length);
-    
-    if (zileCuSomnBun.length > 0) {
-      const zileFericiteCuSomnBun = zileCuSomnBun.filter(zi => zi.stare === 'fericit').length;
-      const procentFericireCuSomnBun = (zileFericiteCuSomnBun / zileCuSomnBun.length) * 100;
-
-      console.log('Procent fericire cu somn bun:', procentFericireCuSomnBun);
-
-      if (procentFericireCuSomnBun > 40) {
-        corelatii.push({
-          titlu: "Somnul Îmbunătățește Starea",
-          descriere: `${Math.round(procentFericireCuSomnBun)}% din zilele cu somn bun sunt zile fericite`,
-          icon: "happy",
-          culoare: "#FFC300"
-        });
-      }
-    }
-
-    // Corelație între antrenamente și stare (mai permisivă)
-    const zileCuAntrenamentPentruStare = dateCorelate.filter(zi => zi.durataAntrenament > 0);
-    console.log('Zile cu antrenament pentru stare:', zileCuAntrenamentPentruStare.length);
-    
-    if (zileCuAntrenamentPentruStare.length > 0) {
-      const zileFericiteCuAntrenament = zileCuAntrenamentPentruStare.filter(zi => zi.stare === 'fericit').length;
-      const procentFericireCuAntrenament = (zileFericiteCuAntrenament / zileCuAntrenamentPentruStare.length) * 100;
-
-      console.log('Procent fericire cu antrenament:', procentFericireCuAntrenament);
-
-      if (procentFericireCuAntrenament > 40) {
-        corelatii.push({
-          titlu: "Antrenamentul Îmbunătățește Starea",
-          descriere: `${Math.round(procentFericireCuAntrenament)}% din zilele cu antrenament sunt zile fericite`,
-          icon: "fitness",
-          culoare: "#45B7D1"
-        });
-      }
-    }
-
-    // Corelații suplimentare pentru cazuri cu puține date
-    if (corelatii.length === 0) {
-      // Verificăm dacă există cel puțin câteva înregistrări
-      const zileCuDate = dateCorelate.filter(zi => zi.oreSomn > 0 || zi.calorii > 0 || zi.durataAntrenament > 0 || zi.stare !== 'neutru');
-      
-      if (zileCuDate.length >= 3) {
-        // Corelație simplă - zilele cu activitate sunt mai fericite
-        const zileCuActivitate = zileCuDate.filter(zi => zi.durataAntrenament > 0 || zi.calorii > 1000);
-        if (zileCuActivitate.length > 0) {
-          const zileFericiteCuActivitate = zileCuActivitate.filter(zi => zi.stare === 'fericit').length;
-          const procentFericireCuActivitate = (zileFericiteCuActivitate / zileCuActivitate.length) * 100;
-          
-          if (procentFericireCuActivitate > 30) {
-            corelatii.push({
-              titlu: "Activitatea Îmbunătățește Starea",
-              descriere: `${Math.round(procentFericireCuActivitate)}% din zilele cu activitate sunt zile fericite`,
-              icon: "trending-up",
-              culoare: "#8caee0"
-            });
+  const renderOverall = () => {
+    const totalZileSomn = dateSomn.filter(zi => zi && zi.data && zi.oraAdormire && zi.oraTrezire).length;
+    const totalZileAlimentatie = dateAlimentatie.filter(zi => zi && zi.data && zi.mese && zi.mese.length > 0).length;
+    const totalZileJurnal = dateJurnal.filter(zi => zi && zi.data && zi.stare).length;
+    const totalZileAntrenamente = dateAntrenamente.filter(zi => zi && zi.data && zi.exercitii).length;
+    const oreSomn = dateSomn
+      .filter(zi => zi && zi.data && zi.oraAdormire && zi.oraTrezire)
+      .map(zi => {
+        try {
+          const [oreAdormire, minuteAdormire] = zi.oraAdormire.split(':').map(Number);
+          const [oreTrezire, minuteTrezire] = zi.oraTrezire.split(':').map(Number);
+          let ore = oreTrezire - oreAdormire;
+          let minute = minuteTrezire - minuteAdormire;
+          if (minute < 0) {
+            ore -= 1;
+            minute += 60;
           }
+          if (ore < 0) {
+            ore += 24;
+          }
+          return ore + (minute / 60);
+        } catch (error) {
+          return 0;
         }
-      }
-    }
-
-    console.log('Corelații găsite:', corelatii.length);
-
+      });
+    const mediaOreSomn = oreSomn.length > 0 ? oreSomn.reduce((a, b) => a + b, 0) / oreSomn.length : 0;
+    const calorii = dateAlimentatie
+      .filter(zi => zi && zi.data && zi.mese && zi.mese.length > 0)
+      .map(zi => zi.mese.reduce((acc, masa) => acc + (masa.calorii || 0), 0));
+    const mediaCalorii = calorii.length > 0 ? calorii.reduce((a, b) => a + b, 0) / calorii.length : 0;
+    const durateAntrenamente = dateAntrenamente
+      .filter(zi => zi && zi.data && zi.timp)
+      .map(zi => parseInt(zi.timp) || 0);
+    const mediaDurataAntrenamente = durateAntrenamente.length > 0 ? durateAntrenamente.reduce((a, b) => a + b, 0) / durateAntrenamente.length : 0;
+    const stari = dateJurnal
+      .filter(zi => zi && zi.data && zi.stare)
+      .map(zi => zi.stare);
+    const notiteFericite = stari.filter(stare => stare === 'fericit').length;
+    const notiteNeutre = stari.filter(stare => stare === 'neutru').length;
+    const notiteTriste = stari.filter(stare => stare === 'trist').length;
+    const totalStari = notiteFericite + notiteNeutre + notiteTriste;
     return (
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Icon name="analytics" size={24} color="#8caee0" />
-          <Text style={styles.sectionTitle}>Corelații</Text>
+          <Text style={styles.sectionTitle}>Statistici Overall</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Descoperiri</Text>
-          <View style={styles.corelatiiContainer}>
-            {corelatii.map((corelatie, index) => (
-              <View key={index} style={[styles.corelatieCard, { borderColor: corelatie.culoare }]}>
-                <View style={[styles.corelatieIconContainer, { backgroundColor: corelatie.culoare }]}>
-                  <Icon name={corelatie.icon} size={24} color="#fff" />
-                </View>
-                <View style={styles.corelatieContent}>
-                  <Text style={styles.corelatieTitle}>{corelatie.titlu}</Text>
-                  <Text style={styles.corelatieDescription}>{corelatie.descriere}</Text>
-                </View>
-              </View>
-            ))}
-            {corelatii.length === 0 && (
-              <Text style={styles.noDataText}>
-                Nu există suficiente date pentru a identifica corelații semnificative. Adaugă mai multe înregistrări în ultimele 7 zile pentru a vedea corelații.
-              </Text>
-            )}
+          <Text style={styles.cardTitle}>Activitate Generală</Text>
+          <View style={styles.statsGridVertical}>
+            <View style={styles.statCardVertical}>
+              <Icon name="moon" size={24} color="#4ECDC4" />
+              <Text style={styles.statValueVertical}>{totalZileSomn}</Text>
+              <Text style={styles.statLabelVertical}>zile cu somn înregistrat</Text>
+            </View>
+            <View style={styles.statCardVertical}>
+              <Icon name="nutrition" size={24} color="#FF6B6B" />
+              <Text style={styles.statValueVertical}>{totalZileAlimentatie}</Text>
+              <Text style={styles.statLabelVertical}>zile cu mese înregistrate</Text>
+            </View>
+            <View style={styles.statCardVertical}>
+              <Icon name="journal" size={24} color="#FFC300" />
+              <Text style={styles.statValueVertical}>{totalZileJurnal}</Text>
+              <Text style={styles.statLabelVertical}>zile cu jurnal completat</Text>
+            </View>
+            <View style={styles.statCardVertical}>
+              <Icon name="fitness" size={24} color="#45B7D1" />
+              <Text style={styles.statValueVertical}>{totalZileAntrenamente}</Text>
+              <Text style={styles.statLabelVertical}>zile cu antrenamente</Text>
+            </View>
           </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Tendințe Generale</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {Math.round(dateCorelate.reduce((acc, zi) => acc + zi.oreSomn, 0) / dateCorelate.length)}
-              </Text>
-              <Text style={styles.statLabel}>Medie ore somn</Text>
+          <Text style={styles.cardTitle}>Medii Generale</Text>
+          <View style={styles.statsGridVertical}>
+            <View style={styles.statCardVertical}>
+              <Icon name="time" size={24} color="#4ECDC4" />
+              <Text style={styles.statValueVertical}>{mediaOreSomn.toFixed(1)}h</Text>
+              <Text style={styles.statLabelVertical}>ore de somn în medie</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {Math.round(dateCorelate.reduce((acc, zi) => acc + zi.calorii, 0) / dateCorelate.length)}
-              </Text>
-              <Text style={styles.statLabel}>Medie calorii/zi</Text>
+            <View style={styles.statCardVertical}>
+              <Icon name="flame" size={24} color="#FF6B6B" />
+              <Text style={styles.statValueVertical}>{Math.round(mediaCalorii)}</Text>
+              <Text style={styles.statLabelVertical}>calorii consumate în medie</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {Math.round(dateCorelate.reduce((acc, zi) => acc + zi.durataAntrenament, 0) / dateCorelate.length)}
+            <View style={styles.statCardVertical}>
+              <Icon name="stopwatch" size={24} color="#45B7D1" />
+              <Text style={styles.statValueVertical}>{Math.round(mediaDurataAntrenamente)}m</Text>
+              <Text style={styles.statLabelVertical}>minute antrenament în medie</Text>
+            </View>
+            <View style={styles.statCardVertical}>
+              <Icon name="happy" size={24} color="#FFC300" />
+              <Text style={styles.statValueVertical}>
+                {totalStari > 0 ? Math.round((notiteFericite / totalStari) * 100) : 0}%
               </Text>
-              <Text style={styles.statLabel}>Medie min antrenament</Text>
+              <Text style={styles.statLabelVertical}>din zile sunt fericite</Text>
             </View>
           </View>
         </View>
@@ -1355,7 +1425,7 @@ const Statistici = () => {
             {activeFilters.alimentatie && renderStatisticiAlimentatie()}
             {activeFilters.jurnal && renderStatisticiJurnal()}
             {activeFilters.antrenamente && renderStatisticiAntrenamente()}
-            {activeFilters.corelatii && renderCorelatii()}
+            {activeFilters.overall && renderOverall()}
           </View>
         </View>
       </ScrollView>
@@ -1748,15 +1818,178 @@ const styles = StyleSheet.create({
   corelatieContent: {
     flex: 1,
   },
-  corelatieTitle: {
+  corelatieTitlu: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#032851',
     marginBottom: 4,
   },
-  corelatieDescription: {
+  corelatieDescriere: {
     fontSize: 14,
     color: '#666',
+  },
+  noCorelatiiContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  noCorelatiiText: {
+    color: '#8caee0',
+    fontSize: 16,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  perioadaContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  perioadaTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  perioadaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginVertical: 5,
+    borderRadius: 10,
+    backgroundColor: 'rgba(140, 174, 224, 0.1)',
+    borderWidth: 1,
+    borderColor: '#8caee0',
+  },
+  perioadaButtonActive: {
+    backgroundColor: '#8caee0',
+  },
+  perioadaButtonText: {
+    color: '#8caee0',
+    fontSize: 14,
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  perioadaButtonTextActive: {
+    color: '#fff',
+  },
+  statsGridHorizontal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  statCardHorizontal: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 15,
+    padding: 15,
+    marginHorizontal: 5,
+    borderWidth: 2,
+    borderColor: '#8caee0',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  statValueHorizontal: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#032851',
+    marginBottom: 5,
+  },
+  statLabelHorizontal: {
+    fontSize: 14,
+    color: '#8caee0',
+    textAlign: 'center',
+  },
+  pieChartContainerHorizontal: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    width: '100%',
+    marginLeft: -110,
+  },
+  pieChartHorizontal: {
+    marginVertical: 8,
+    borderRadius: 16,
+    marginRight: 60,
+    width: Math.min(screenWidth * 0.4, 160),
+    height: Math.min(screenWidth * 0.4, 160),
+    alignSelf: 'center',
+  },
+  legendContainerHorizontal: {
+    flex: 1,
+    paddingLeft: -10,
+    justifyContent: 'center',
+    maxWidth: '95%',
+    minWidth: 150,
+  },
+  legendItemHorizontal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingRight: 10,
+  },
+  legendColorHorizontal: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  legendTextHorizontal: {
+    fontSize: 14,
+    color: '#032851',
+    fontWeight: '500',
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  statsGridVertical: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  statCardVertical: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 15,
+    padding: 15,
+    marginVertical: 5,
+    marginHorizontal: 0,
+    borderWidth: 2,
+    borderColor: '#8caee0',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minHeight: 60,
+    width: '100%',
+  },
+  statValueVertical: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#032851',
+    marginLeft: 15,
+    marginRight: 15,
+    minWidth: 60,
+    textAlign: 'center',
+  },
+  statLabelVertical: {
+    fontSize: 16,
+    color: '#032851',
+    textAlign: 'left',
+    flex: 1,
+    marginLeft: 5,
+    fontWeight: '500',
   },
 });
 

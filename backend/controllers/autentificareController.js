@@ -2,12 +2,32 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Funcție helper pentru validarea parolei
+const validatePassword = (parola) => {
+  if (parola.length < 8) {
+    return { valid: false, message: 'Parola trebuie să aibă minim 8 caractere!' };
+  }
+  if (!/[A-Z]/.test(parola)) {
+    return { valid: false, message: 'Parola trebuie să conțină cel puțin o literă mare!' };
+  }
+  if (!/[0-9]/.test(parola)) {
+    return { valid: false, message: 'Parola trebuie să conțină cel puțin o cifră!' };
+  }
+  return { valid: true };
+};
+
 exports.register = async (req, res) => {
   console.log('Cerere primită pentru înregistrare:', req.body);
   const { nrTelefon, parola } = req.body;
 
   if (!nrTelefon || !parola) {
     return res.status(400).json({ mesaj: 'Toate câmpurile sunt obligatorii!' });
+  }
+
+  // Validări pentru parolă
+  const passwordValidation = validatePassword(parola);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({ mesaj: passwordValidation.message });
   }
 
   try {

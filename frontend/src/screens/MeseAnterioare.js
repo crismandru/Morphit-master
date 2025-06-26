@@ -13,7 +13,7 @@ const MeseAnterioare = () => {
   const [cautare, setCautare] = useState('');
   const [filtruCalorii, setFiltruCalorii] = useState('toate');
   const [sortare, setSortare] = useState('data');
-  const [sortareDirectie, setSortareDirectie] = useState('desc');
+  const [sortareDirectie, setSortareDirectie] = useState('asc');
   const [filtruProteine, setFiltruProteine] = useState('toate');
   const [filtruCarbohidrati, setFiltruCarbohidrati] = useState('toate');
   const [filtruGrasimi, setFiltruGrasimi] = useState('toate');
@@ -34,10 +34,16 @@ const MeseAnterioare = () => {
         const token = await AsyncStorage.getItem('token');
         if (!token) return;
 
+        console.log('Se preiau zilele de mese din istoric');
         const response = await axios.get('http://172.20.10.2:5000/alimentatie/istoric', {
           headers: { Authorization: `Bearer ${token}` }
         });
         console.log('Răspuns istoric:', response.data);
+        console.log('Numărul de zile primite:', response.data.length);
+        console.log('Primele 3 zile:', response.data.slice(0, 3).map(item => ({
+          data: item.data,
+          meseCount: item.mese.length
+        })));
         setZileMese(response.data);
       } catch (error) {
         console.error('Eroare la încărcarea zilelor:', error);
@@ -102,7 +108,9 @@ const MeseAnterioare = () => {
   };
 
   const renderMeseZi = ({ item, index }) => {
+    console.log('Rendering ziua:', item.data, 'index:', index);
     const dataFormatata = item.data.split('-').reverse().join('.');
+    console.log('Data formatată pentru afișare:', dataFormatata);
     
     const sumar = {
       caloriiConsumate: item.mese.reduce((acc, masa) => acc + masa.calorii, 0),

@@ -171,9 +171,17 @@ exports.actualizeazaObiective = async (req, res) => {
 
 exports.obtineIstoric = async (req, res) => {
   try {
+    console.log('Se preiau datele pentru istoricul alimentației');
     const alimentatie = await Alimentatie.find({ 
       utilizator: req.user.id 
-    }).sort({ data: -1 });
+    }).sort({ data: 1 });
+
+    console.log('Date găsite în baza de date:', alimentatie.length);
+    console.log('Primele 3 înregistrări:', alimentatie.slice(0, 3).map(item => ({
+      data: item.data,
+      updatedAt: item.updatedAt,
+      meseCount: item.mese.length
+    })));
 
     // Normalizăm datele și eliminăm duplicatele
     const dateNormalizate = new Map();
@@ -188,6 +196,8 @@ exports.obtineIstoric = async (req, res) => {
         dataNormalizata = zi.data;
       }
 
+      console.log(`Data originală: ${zi.data} -> Data normalizată: ${dataNormalizata}`);
+
       // Păstrăm doar cea mai recentă înregistrare pentru fiecare dată
       if (!dateNormalizate.has(dataNormalizata) || 
           new Date(zi.updatedAt) > new Date(dateNormalizate.get(dataNormalizata).updatedAt)) {
@@ -198,10 +208,16 @@ exports.obtineIstoric = async (req, res) => {
       }
     });
 
-    // Convertim Map-ul în array și sortăm după dată
+    // Convertim Map-ul în array și sortăm după dată crescător
     const rezultat = Array.from(dateNormalizate.values())
-      .sort((a, b) => new Date(b.data.split('.').reverse().join('-')) - 
-                     new Date(a.data.split('.').reverse().join('-')));
+      .sort((a, b) => new Date(a.data.split('.').reverse().join('-')) - 
+                     new Date(b.data.split('.').reverse().join('-')));
+    
+    console.log('Rezultat final:', rezultat.length, 'zile');
+    console.log('Primele 3 zile din rezultat:', rezultat.slice(0, 3).map(item => ({
+      data: item.data,
+      meseCount: item.mese.length
+    })));
     
     res.json(rezultat);
   } catch (error) {

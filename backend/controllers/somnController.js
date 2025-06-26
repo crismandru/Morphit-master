@@ -1,6 +1,5 @@
 const Somn = require('../models/Somn');
 
-// Obține toate înregistrările de somn ale unui utilizator
 exports.obtineInregistrari = async (req, res) => {
   try {
     const inregistrari = await Somn.find({ utilizator: req.user.id })
@@ -12,65 +11,46 @@ exports.obtineInregistrari = async (req, res) => {
   }
 };
 
-// Adaugă o înregistrare nouă
 exports.adaugaInregistrare = async (req, res) => {
   try {
-    console.log('Date primite:', req.body);
-    console.log('User ID:', req.user.id);
-    
-    const { 
-      oraAdormire, 
-      oraTrezire, 
-      rating, 
-      detaliiCalitate
-    } = req.body;
-
+    const { oraAdormire, oraTrezire, rating, detaliiCalitate, data } = req.body;
     if (!rating) {
       return res.status(400).json({ mesaj: 'Rating-ul este obligatoriu' });
     }
-
     if (!oraAdormire || !oraTrezire) {
       return res.status(400).json({ mesaj: 'Orele de adormire și trezire sunt obligatorii' });
     }
-
     if (!req.user || !req.user.id) {
       return res.status(401).json({ mesaj: 'Utilizator neautentificat' });
     }
-
-    // Verifică dacă există deja o sesiune pentru această zi
-    const data = new Date();
-    data.setHours(0, 0, 0, 0);
-    const dataUrmatoare = new Date(data);
+    const dataSesiune = data ? new Date(data) : new Date();
+    const dataInceput = new Date(dataSesiune);
+    dataInceput.setHours(0, 0, 0, 0);
+    const dataUrmatoare = new Date(dataInceput);
     dataUrmatoare.setDate(dataUrmatoare.getDate() + 1);
-
     const sesiuneExistenta = await Somn.findOne({
       utilizator: req.user.id,
       data: {
-        $gte: data,
+        $gte: dataInceput,
         $lt: dataUrmatoare
       }
     });
-
     if (sesiuneExistenta) {
       return res.status(400).json({ 
         mesaj: 'Nu poți adăuga mai multe sesiuni de somn în aceeași zi',
         cod: 'SESIUNE_EXISTENTA'
       });
     }
-
     const inregistrareNoua = new Somn({
       utilizator: req.user.id,
+      data: dataSesiune,
       oraAdormire,
       oraTrezire,
       rating,
       detaliiCalitate
     });
-
-    console.log('Înregistrare nouă:', inregistrareNoua);
-    
     try {
       await inregistrareNoua.save();
-      console.log('Înregistrare salvată cu succes');
       res.status(201).json(inregistrareNoua);
     } catch (saveError) {
       console.error('Eroare la salvarea înregistrării:', saveError);
@@ -90,7 +70,6 @@ exports.adaugaInregistrare = async (req, res) => {
   }
 };
 
-// Șterge o înregistrare
 exports.stergeInregistrare = async (req, res) => {
   try {
     const inregistrare = await Somn.findById(req.params.id);
@@ -108,7 +87,6 @@ exports.stergeInregistrare = async (req, res) => {
   }
 };
 
-// Actualizează o înregistrare
 exports.actualizeazaInregistrare = async (req, res) => {
   try {
     const { 

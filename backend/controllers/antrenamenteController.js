@@ -1,25 +1,15 @@
 const Antrenament = require('../models/Antrenament');
 const Exercitiu = require('../models/Exercitiu');
 
-// Creare antrenament nou
 exports.creareAntrenament = async (req, res) => {
   try {
-    console.log('=== CREARE ANTRENAMENT NOU ===');
-    console.log('Date primite:', JSON.stringify(req.body, null, 2));
-    
     const { tip, data, timp, durata, exercitii } = req.body;
-    console.log('Tip antrenament primit:', tip);
-    console.log('Exerciții primite:', JSON.stringify(exercitii, null, 2));
-    
     const exercitiiExistent = await Exercitiu.find({
       _id: { $in: exercitii.map(ex => ex.exercitiu) }
     });
-    console.log('Exerciții găsite în baza de date:', exercitiiExistent.length);
-
     const exercitiiMap = new Map(
       exercitiiExistent.map(ex => [ex._id.toString(), ex])
     );
-
     for (const ex of exercitii) {
       if (!exercitiiMap.has(ex.exercitiu)) {
         console.log('Exercițiu negăsit:', ex.exercitiu);
@@ -28,46 +18,34 @@ exports.creareAntrenament = async (req, res) => {
         });
       }
     }
-
     const exercitiiFormatate = exercitii.map(ex => {
-      console.log('\nProcesăm exercițiul:', ex.numeExercitiu);
-      console.log('Date exercițiu primite:', JSON.stringify(ex, null, 2));
-      
       const exercitiuExistent = exercitiiMap.get(ex.exercitiu);
-      
       let seturiFormatate = [];
       if (typeof ex.seturi === 'number') {
-        console.log('Format vechi detectat - seturi ca număr:', ex.seturi);
         for (let i = 0; i < ex.seturi; i++) {
           const set = {
             repetari: parseInt(ex.repetari) || 0,
             greutate: parseInt(ex.greutate) || 0
           };
-          console.log(`Set ${i + 1} formatat:`, set);
           seturiFormatate.push(set);
         }
       } else if (Array.isArray(ex.seturi)) {
-        console.log('Format nou detectat - seturi ca array:', ex.seturi);
         seturiFormatate = ex.seturi.map((set, index) => {
           const setFormatat = {
             repetari: parseInt(set.repetari) || 0,
             greutate: parseInt(set.greutate) || 0
           };
-          console.log(`Set ${index + 1} formatat:`, setFormatat);
           return setFormatat;
         });
       }
-
       const exercitiuFormatat = {
         exercitiu: ex.exercitiu,
         numeExercitiu: ex.numeExercitiu || exercitiuExistent.nume,
         grupaDeMuschi: ex.grupaDeMuschi || exercitiuExistent.grupaMusculara,
         seturi: seturiFormatate
       };
-      console.log('Exercițiu formatat final:', JSON.stringify(exercitiuFormatat, null, 2));
       return exercitiuFormatat;
     });
-
     const antrenamentNou = new Antrenament({
       utilizator: req.user._id,
       tip: tip || 'Personalizat',
@@ -75,15 +53,10 @@ exports.creareAntrenament = async (req, res) => {
       timp: timp || durata,
       exercitii: exercitiiFormatate
     });
-
-    console.log('\nAntrenament nou creat:', JSON.stringify(antrenamentNou, null, 2));
     const antrenamentSalvat = await antrenamentNou.save();
-    console.log('Antrenament salvat cu succes:', JSON.stringify(antrenamentSalvat, null, 2));
-    
     res.status(201).json(antrenamentSalvat);
   } catch (error) {
     console.error('Eroare la crearea antrenamentului:', error);
-    console.error('Stack trace:', error.stack);
     res.status(500).json({ 
       mesaj: 'Eroare la salvarea antrenamentului',
       eroare: error.message 

@@ -18,6 +18,14 @@ const Jurnal = () => {
           const response = await axios.get('http://172.20.10.2:5000/jurnal', {
             headers: { Authorization: `Bearer ${token}` }
           });
+          console.log('=== NOTIȚE PRIMITE DE LA BACKEND ===');
+          console.log('Notițe primite:', JSON.stringify(response.data, null, 2));
+          if (response.data.length > 0) {
+            console.log('Prima notiță primită:', JSON.stringify(response.data[0], null, 2));
+            console.log('Data primei notițe (raw):', response.data[0].data);
+            console.log('Data primei notițe (new Date):', new Date(response.data[0].data));
+            console.log('Data primei notițe (toLocaleDateString):', new Date(response.data[0].data).toLocaleDateString());
+          }
           setNotite(response.data);
         }
       } catch (error) {
@@ -65,6 +73,15 @@ const Jurnal = () => {
     });
   };
 
+  const formatareData = (data) => {
+    const date = new Date(data);
+    // Folosim UTC pentru a evita problemele cu timezone-ul
+    const zi = date.getUTCDate().toString().padStart(2, '0');
+    const luna = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const an = date.getUTCFullYear();
+    return `${zi}.${luna}.${an}`;
+  };
+
   return (
     <View style={styles.container}>
       <Image source={require('../../assets/fundaluri/Jurnal.png')} style={styles.image} />
@@ -88,7 +105,7 @@ const Jurnal = () => {
                   <Text style={styles.titluNotita}>{item.titlu}</Text>
                   <Text style={styles.textNotita}>{item.continut}</Text>
                   <View style={styles.footerNotita}>
-                    <Text style={styles.data}>{new Date(item.data).toLocaleDateString()}</Text>
+                    <Text style={styles.data}>{formatareData(item.data)}</Text>
                     <Icon 
                       name={
                         item.stare === 'fericit' ? 'happy-outline' :

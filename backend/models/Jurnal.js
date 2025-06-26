@@ -8,7 +8,13 @@ const jurnalSchema = new mongoose.Schema({
   },
   data: {
     type: Date,
-    default: Date.now
+    required: true,
+    validate: {
+      validator: function(v) {
+        return v instanceof Date && !isNaN(v);
+      },
+      message: 'Data trebuie să fie o dată validă'
+    }
   },
   titlu: {
     type: String,

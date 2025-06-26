@@ -2,6 +2,20 @@ import React, { useState } from 'react';
 import { View, Image, TextInput, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+// Funcție helper pentru validarea parolei
+const validatePassword = (parola) => {
+  if (parola.length < 8) {
+    return { valid: false, message: 'Parola trebuie să aibă minim 8 caractere!' };
+  }
+  if (!/[A-Z]/.test(parola)) {
+    return { valid: false, message: 'Parola trebuie să conțină cel puțin o literă mare!' };
+  }
+  if (!/[0-9]/.test(parola)) {
+    return { valid: false, message: 'Parola trebuie să conțină cel puțin o cifră!' };
+  }
+  return { valid: true };
+};
+
 const Register = () => {
   const [nrTelefon, setNrTelefon] = useState('');
   const [parola, setPassword] = useState('');
@@ -11,6 +25,12 @@ const Register = () => {
   const handleRegister = async () => {
     if (parola !== confirmPassword) {
       alert('Parolele nu coincid!');
+      return;
+    }
+
+    const validationResult = validatePassword(parola);
+    if (!validationResult.valid) {
+      alert(validationResult.message);
       return;
     }
     
@@ -64,7 +84,7 @@ const Register = () => {
 
           <TextInput
             style={styles.input}
-            placeholder="Parolă"
+            placeholder="Parolă (min. 8 caractere, o literă mare și o cifră)"
             placeholderTextColor="#333"
             secureTextEntry
             value={parola}

@@ -35,8 +35,8 @@ const Login = () => {
         alert('Token lipsă din răspuns!');
       }
     } catch (error) {
-      console.error('Eroare:', error.response?.data || error.message);
-      alert(error.response?.data?.mesaj || 'Număr de telefon sau parolă incorecte!');
+      const errorMessage = error.response?.data?.mesaj || 'Număr de telefon sau parolă incorecte!';
+      alert(errorMessage);
     }
   };
 

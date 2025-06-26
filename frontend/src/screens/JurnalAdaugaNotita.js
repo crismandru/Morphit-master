@@ -22,6 +22,17 @@ const JurnalAdaugaNotita = ({ route }) => {
   }, [route.params]);
 
   const salveazaNotita = async () => {
+    // Validări pentru a preveni salvarea notițelor goale
+    if (!titlu.trim()) {
+      Alert.alert('Eroare', 'Te rog să introduci un titlu pentru notiță.');
+      return;
+    }
+
+    if (!continut.trim()) {
+      Alert.alert('Eroare', 'Te rog să introduci conținut pentru notiță.');
+      return;
+    }
+
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
@@ -29,11 +40,20 @@ const JurnalAdaugaNotita = ({ route }) => {
         return;
       }
 
+      const dataCurenta = new Date();
+      console.log('=== SALVARE NOTIȚĂ ===');
+      console.log('Data curentă din sistem:', dataCurenta);
+      console.log('Data curentă (ISO):', dataCurenta.toISOString());
+      console.log('Data curentă (local):', dataCurenta.toLocaleDateString());
+
       const notitaData = {
-        titlu,
-        continut,
-        stare
+        titlu: titlu.trim(),
+        continut: continut.trim(),
+        stare,
+        data: dataCurenta
       };
+
+      console.log('Datele care se trimit:', JSON.stringify(notitaData, null, 2));
 
       if (id) {
         await axios.put(`http://172.20.10.2:5000/jurnal/${id}`, notitaData, {
@@ -47,8 +67,9 @@ const JurnalAdaugaNotita = ({ route }) => {
 
       navigation.goBack();
     } catch (error) {
-      console.error('Eroare la salvare:', error);
-      Alert.alert('Eroare', 'Nu s-a putut salva notița');
+      // Gestionăm erorile fără să le afișăm în consolă
+      const errorMessage = error.response?.data?.mesaj || 'Nu s-a putut salva notița';
+      Alert.alert('Eroare', errorMessage);
     }
   };
 

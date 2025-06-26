@@ -135,12 +135,21 @@ const SomnAdaugaSesiune = () => {
         return;
       }
 
+      const dataCurenta = new Date();
+      console.log('=== SALVARE SESIUNE SOMN ===');
+      console.log('Data curentă din sistem:', dataCurenta);
+      console.log('Data curentă (ISO):', dataCurenta.toISOString());
+      console.log('Data curentă (local):', dataCurenta.toLocaleDateString());
+
       const sesiuneData = {
+        data: dataCurenta,
         oraAdormire: oraAdormire + ':00',
         oraTrezire: oraTrezire + ':00',
         rating,
         detaliiCalitate
       };
+
+      console.log('Datele care se trimit:', JSON.stringify(sesiuneData, null, 2));
 
       const response = await axios.post('http://172.20.10.2:5000/somn', sesiuneData, {
         headers: { Authorization: `Bearer ${token}` }
@@ -151,7 +160,7 @@ const SomnAdaugaSesiune = () => {
       if (error.response?.data?.cod === 'SESIUNE_EXISTENTA') {
         Alert.alert(
           'Sesiune existentă',
-          'Ai deja o sesiune de somn înregistrată pentru astăzi. Poți adăuga o nouă sesiune mâine.',
+          'Ai deja o sesiune de somn înregistrată pentru această dată. Poți adăuga o nouă sesiune pentru o altă dată.',
           [
             { 
               text: 'OK', 

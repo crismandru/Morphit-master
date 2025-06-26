@@ -115,6 +115,55 @@ const Calculator = () => {
     }
   };
 
+  // Functie pentru calcularea varstei din data nasterii
+  const calculeazaVarsta = (dataNasterii) => {
+    if (!dataNasterii) return '';
+    const parts = dataNasterii.split('.');
+    if (parts.length !== 3) return '';
+    const zi = parseInt(parts[0], 10);
+    const luna = parseInt(parts[1], 10) - 1;
+    const an = parseInt(parts[2], 10);
+    const azi = new Date();
+    let varsta = azi.getFullYear() - an;
+    if (
+      azi.getMonth() < luna ||
+      (azi.getMonth() === luna && azi.getDate() < zi)
+    ) {
+      varsta--;
+    }
+    return varsta.toString();
+  };
+
+  // Functie pentru maparea genului
+  const mapGen = (gen) => {
+    if (!gen) return 'male';
+    if (gen.toLowerCase() === 'masculin') return 'male';
+    if (gen.toLowerCase() === 'feminin') return 'female';
+    return gen;
+  };
+
+  // Functie pentru completarea automata
+  const completeazaCuDatePersonale = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        Alert.alert('Eroare', 'Nu ești autentificat.');
+        return;
+      }
+      const response = await axios.get(`${API_BASE_URL}/detalii/obtine`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const detalii = response.data;
+      setGreutate(detalii.greutate ? detalii.greutate.toString() : '');
+      setInaltime(detalii.inaltime ? detalii.inaltime.toString() : '');
+      setGen(mapGen(detalii.gen));
+      setVarsta(calculeazaVarsta(detalii.dataNasterii));
+    } catch (error) {
+      console.error('Eroare la preluarea datelor personale:', error);
+      Alert.alert('Eroare', 'Nu s-au putut prelua datele personale.');
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -131,6 +180,11 @@ const Calculator = () => {
             <TextInput style={styles.input} placeholder="Greutate (kg)" placeholderTextColor="#fff" keyboardType="numeric" value={greutate} onChangeText={setGreutate} />
             <TextInput style={styles.input} placeholder="Înălțime (cm)" placeholderTextColor="#fff" keyboardType="numeric" value={inaltime} onChangeText={setInaltime} />
             <TextInput style={styles.input} placeholder="Vârstă" placeholderTextColor="#fff" keyboardType="numeric" value={varsta} onChangeText={setVarsta} />
+            
+            {/* Buton completare automata */}
+            <TouchableOpacity style={[styles.buton, {marginBottom: 10, backgroundColor: '#1D3557'}]} onPress={completeazaCuDatePersonale}>
+              <Text style={styles.textButonMic}>Completează cu datele personale</Text>
+            </TouchableOpacity>
             
             <View style={styles.radioContainer}>
               <TouchableOpacity onPress={() => setGen('male')}><Text style={gen === 'male' ? styles.selected : styles.radio}>Masculin</Text></TouchableOpacity>
@@ -160,7 +214,7 @@ const Calculator = () => {
                 <Text style={styles.rezultatText}>Carbohidrați: {carbohidrati}g</Text>
                 <Text style={styles.rezultatText}>Grăsimi: {grasimi}g</Text>
                 
-                <TouchableOpacity style={styles.buton} onPress={salveazaDate}>
+                <TouchableOpacity style={[styles.buton, {marginBottom: 0, marginTop: 10}]} onPress={salveazaDate}>
                   <Text style={styles.textButon}>Salvează</Text>
                 </TouchableOpacity>
               </View>
@@ -199,6 +253,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: '100%',
     marginBottom: 10,
+    fontWeight: 'bold',
     paddingHorizontal: 10,
     color: '#fff',
   },
@@ -231,12 +286,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  textButonMic: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   rezultateContainer: {
     padding: 15,
     backgroundColor: '#fff',
     borderRadius: 10,
     width: '100%',
-    height: '32%',
+    marginTop: -10,
+    paddingBottom: 5,
   },
   rezultatText: {
     fontSize: 16,
